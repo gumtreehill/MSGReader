@@ -43,6 +43,7 @@ using MsgReader.Localization;
 using MsgReader.Mime.Header;
 using MsgReader.Outlook;
 // ReSharper disable FunctionComplexityOverflow
+// ReSharper disable UnusedMember.Global
 
 namespace MsgReader
 {
@@ -226,6 +227,9 @@ namespace MsgReader
         /// <param name="inputFile">The msg file</param>
         /// <param name="outputFolder">The folder where to save the extracted msg file</param>
         /// <param name="hyperlinks">When true hyperlinks are generated for the To, CC, BCC and attachments</param>
+        /// <param name="messageType">Use this if you get the exception <see cref="MRFileTypeNotSupported"/> and
+        /// want to force this method to use a specific <see cref="MessageType"/> to parse this MSG file. This
+        /// is only used when the file is an MSG file</param>
         /// <returns>String array containing the full path to the message body and its attachments</returns>
         /// <exception cref="MRFileTypeNotSupported">Raised when the Microsoft Outlook message type is not supported</exception>
         /// <exception cref="MRInvalidSignedFile">Raised when the Microsoft Outlook signed message is invalid</exception>
@@ -233,7 +237,11 @@ namespace MsgReader
         /// <exception cref="FileNotFoundException">Raised when the <param ref="inputFile"/> does not exists</exception>
         /// <exception cref="DirectoryNotFoundException">Raised when the <param ref="outputFolder"/> does not exists</exception>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
-        public string[] ExtractToFolder(string inputFile, string outputFolder, bool hyperlinks = false)
+        public string[] ExtractToFolder(
+            string inputFile, 
+            string outputFolder, 
+            bool hyperlinks = false,
+            MessageType? messageType = null)
         {
             outputFolder = FileManager.CheckForBackSlash(outputFolder);
             
@@ -254,59 +262,62 @@ namespace MsgReader
                     using (var stream = File.Open(inputFile, FileMode.Open, FileAccess.Read))
                     using (var message = new Storage.Message(stream))
                     {
-                        switch (message.Type)
+                        if (messageType == null)
+                            messageType = message.Type;
+
+                        switch (messageType)
                         {
-                            case Storage.Message.MessageType.Email:
-                            case Storage.Message.MessageType.EmailSms:
-                            case Storage.Message.MessageType.EmailNonDeliveryReport:
-                            case Storage.Message.MessageType.EmailDeliveryReport:
-                            case Storage.Message.MessageType.EmailDelayedDeliveryReport:
-                            case Storage.Message.MessageType.EmailReadReceipt:
-                            case Storage.Message.MessageType.EmailNonReadReceipt:
-                            case Storage.Message.MessageType.EmailEncryptedAndMaybeSigned:
-                            case Storage.Message.MessageType.EmailEncryptedAndMaybeSignedNonDelivery:
-                            case Storage.Message.MessageType.EmailEncryptedAndMaybeSignedDelivery:
-                            case Storage.Message.MessageType.EmailClearSignedReadReceipt:
-                            case Storage.Message.MessageType.EmailClearSignedNonDelivery:
-                            case Storage.Message.MessageType.EmailClearSignedDelivery:
-                            case Storage.Message.MessageType.EmailBmaStub:
-                            case Storage.Message.MessageType.CiscoUnityVoiceMessage:
-                            case Storage.Message.MessageType.EmailClearSigned:
-                            case Storage.Message.MessageType.RightFaxAdv:
-                            case Storage.Message.MessageType.SkypeForBusinessMissedMessage:
-                            case Storage.Message.MessageType.SkypeForBusinessConversation:
+                            case MessageType.Email:
+                            case MessageType.EmailSms:
+                            case MessageType.EmailNonDeliveryReport:
+                            case MessageType.EmailDeliveryReport:
+                            case MessageType.EmailDelayedDeliveryReport:
+                            case MessageType.EmailReadReceipt:
+                            case MessageType.EmailNonReadReceipt:
+                            case MessageType.EmailEncryptedAndMaybeSigned:
+                            case MessageType.EmailEncryptedAndMaybeSignedNonDelivery:
+                            case MessageType.EmailEncryptedAndMaybeSignedDelivery:
+                            case MessageType.EmailClearSignedReadReceipt:
+                            case MessageType.EmailClearSignedNonDelivery:
+                            case MessageType.EmailClearSignedDelivery:
+                            case MessageType.EmailBmaStub:
+                            case MessageType.CiscoUnityVoiceMessage:
+                            case MessageType.EmailClearSigned:
+                            case MessageType.RightFaxAdv:
+                            case MessageType.SkypeForBusinessMissedMessage:
+                            case MessageType.SkypeForBusinessConversation:
                                 return WriteMsgEmail(message, outputFolder, hyperlinks).ToArray();
 
-                            //case Storage.Message.MessageType.EmailClearSigned:
+                            //case MessageType.EmailClearSigned:
                             //    throw new MRFileTypeNotSupported("A clear signed message is not supported");
 
-                            case Storage.Message.MessageType.Appointment:
-                            case Storage.Message.MessageType.AppointmentNotification:
-                            case Storage.Message.MessageType.AppointmentSchedule:
-                            case Storage.Message.MessageType.AppointmentRequest:
-                            case Storage.Message.MessageType.AppointmentRequestNonDelivery:
-                            case Storage.Message.MessageType.AppointmentResponse:
-                            case Storage.Message.MessageType.AppointmentResponsePositive:
-                            case Storage.Message.MessageType.AppointmentResponsePositiveNonDelivery:
-                            case Storage.Message.MessageType.AppointmentResponseNegative:
-                            case Storage.Message.MessageType.AppointmentResponseNegativeNonDelivery:
-                            case Storage.Message.MessageType.AppointmentResponseTentative:
-                            case Storage.Message.MessageType.AppointmentResponseTentativeNonDelivery:
+                            case MessageType.Appointment:
+                            case MessageType.AppointmentNotification:
+                            case MessageType.AppointmentSchedule:
+                            case MessageType.AppointmentRequest:
+                            case MessageType.AppointmentRequestNonDelivery:
+                            case MessageType.AppointmentResponse:
+                            case MessageType.AppointmentResponsePositive:
+                            case MessageType.AppointmentResponsePositiveNonDelivery:
+                            case MessageType.AppointmentResponseNegative:
+                            case MessageType.AppointmentResponseNegativeNonDelivery:
+                            case MessageType.AppointmentResponseTentative:
+                            case MessageType.AppointmentResponseTentativeNonDelivery:
                                 return WriteMsgAppointment(message, outputFolder, hyperlinks).ToArray();
 
-                            case Storage.Message.MessageType.Contact:
+                            case MessageType.Contact:
                                 return WriteMsgContact(message, outputFolder, hyperlinks).ToArray();
 
-                            case Storage.Message.MessageType.Task:
-                            case Storage.Message.MessageType.TaskRequestAccept:
-                            case Storage.Message.MessageType.TaskRequestDecline:
-                            case Storage.Message.MessageType.TaskRequestUpdate:
+                            case MessageType.Task:
+                            case MessageType.TaskRequestAccept:
+                            case MessageType.TaskRequestDecline:
+                            case MessageType.TaskRequestUpdate:
                                 return WriteMsgTask(message, outputFolder, hyperlinks).ToArray();
                                 
-                            case Storage.Message.MessageType.StickyNote:
+                            case MessageType.StickyNote:
                                 return WriteMsgStickyNote(message, outputFolder).ToArray();
 
-                            case Storage.Message.MessageType.Unknown:
+                            case MessageType.Unknown:
                                 throw new MRFileTypeNotSupported("Unsupported message type");
                         }
                     }
@@ -355,12 +366,11 @@ namespace MsgReader
         /// <returns>Body as string (can be html code, ...)</returns>
         public string ExtractMsgEmailBody(Storage.Message message, bool hyperlinks, string contentType, bool withHeaderTable = true)
         {
-            bool htmlBody;
-
-            var body = PreProcessMsgFile(message, out htmlBody);
+            var body = PreProcessMsgFile(message, out var htmlBody);
             if (withHeaderTable)
             {
-                var emailHeader = ExtractMsgEmailHeader(message, htmlBody, hyperlinks);
+                var attachments = message?.Attachments?.OfType<Storage.Attachment>().Select(m => m.FileName).ToList();
+                var emailHeader = ExtractMsgEmailHeader(message, htmlBody, hyperlinks, attachments);
                 body = InjectHeader(body, emailHeader, contentType);
             }
 
@@ -476,8 +486,8 @@ namespace MsgReader
                     #endregion
                 };
 
-                if (message.Type == Storage.Message.MessageType.EmailEncryptedAndMaybeSigned ||
-                    message.Type == Storage.Message.MessageType.EmailClearSigned)
+                if (message.Type == MessageType.EmailEncryptedAndMaybeSigned ||
+                    message.Type == MessageType.EmailClearSigned)
                     languageConsts.Add(LanguageConsts.EmailSignedBy);
 
                 maxLength = languageConsts.Select(languageConst => languageConst.Length).Concat(new[] {0}).Max() + 2;
@@ -499,20 +509,20 @@ namespace MsgReader
 
             // To
             WriteHeaderLineNoEncoding(emailHeader, htmlBody, maxLength, LanguageConsts.EmailToLabel,
-                message.GetEmailRecipients(Storage.Recipient.RecipientType.To, htmlBody, hyperlinks));
+                message.GetEmailRecipients(RecipientType.To, htmlBody, hyperlinks));
 
             // CC
-            var cc = message.GetEmailRecipients(Storage.Recipient.RecipientType.Cc, htmlBody, hyperlinks);
+            var cc = message.GetEmailRecipients(RecipientType.Cc, htmlBody, hyperlinks);
             if (!string.IsNullOrEmpty(cc))
                 WriteHeaderLineNoEncoding(emailHeader, htmlBody, maxLength, LanguageConsts.EmailCcLabel, cc);
 
             // BCC
-            var bcc = message.GetEmailRecipients(Storage.Recipient.RecipientType.Bcc, htmlBody, hyperlinks);
+            var bcc = message.GetEmailRecipients(RecipientType.Bcc, htmlBody, hyperlinks);
             if (!string.IsNullOrEmpty(bcc))
                 WriteHeaderLineNoEncoding(emailHeader, htmlBody, maxLength, LanguageConsts.EmailBccLabel, bcc);
 
-            if (message.Type == Storage.Message.MessageType.EmailEncryptedAndMaybeSigned ||
-                message.Type == Storage.Message.MessageType.EmailClearSigned)
+            if (message.Type == MessageType.EmailEncryptedAndMaybeSigned ||
+                message.Type == MessageType.EmailClearSigned)
             {
                 var signerInfo = message.SignedBy;
                 if (message.SignedOn != null)
@@ -735,21 +745,16 @@ namespace MsgReader
         private List<string> WriteMsgEmail(Storage.Message message, string outputFolder, bool hyperlinks)
         {
             var fileName = "email";
-            bool htmlBody;
-            string body;
-            string dummy;
-            List<string> attachmentList;
-            List<string> files;
 
             PreProcessMsgFile(message,
                 hyperlinks,
                 outputFolder,
                 ref fileName,
-                out htmlBody,
-                out body,
-                out dummy,
-                out attachmentList,
-                out files);
+                out var htmlBody,
+                out var body,
+                out _,
+                out var attachmentList,
+                out var files);
 
             var emailHeader = ExtractMsgEmailHeader(message, htmlBody, hyperlinks, attachmentList);
             body = InjectHeader(body, emailHeader);
@@ -772,18 +777,14 @@ namespace MsgReader
         public List<MemoryStream> WriteEmlStreamEmail(Mime.Message message, bool hyperlinks)
         {
             var fileName = "email";
-            bool htmlBody;
-            string body;
-            List<string> attachmentList;
-            List<MemoryStream> attachStreams;
-            List<MemoryStream> streams = new List<MemoryStream>();
+            var streams = new List<MemoryStream>();
 
             PreProcessEmlStream(message,
                 hyperlinks,
-                out htmlBody,
-                out body,
-                out attachmentList,
-                out attachStreams);
+                out var htmlBody,
+                out var body,
+                out var attachmentList,
+                out var attachStreams);
 
             if (!htmlBody)
                 hyperlinks = false;
@@ -829,8 +830,7 @@ namespace MsgReader
 
             // Sent on
             WriteHeaderLine(emailHeader, htmlBody, maxLength, LanguageConsts.EmailSentOnLabel,
-                (message.Headers.DateSent.ToLocalTime()).ToString(LanguageConsts.DataFormatWithTime,
-                    new CultureInfo(LanguageConsts.DataFormatWithTime)));
+                message.Headers.DateSent.ToLocalTime().ToString(LanguageConsts.DataFormatWithTime));
 
             // To
             WriteHeaderLineNoEncoding(emailHeader, htmlBody, maxLength, LanguageConsts.EmailToLabel,
@@ -927,19 +927,15 @@ namespace MsgReader
         private List<string> WriteEmlEmail(Mime.Message message, string outputFolder, bool hyperlinks)
         {
             var fileName = "email";
-            bool htmlBody;
-            string body;
-            List<string> attachmentList;
-            List<string> files;
 
             PreProcessEmlFile(message,
                 hyperlinks,
                 outputFolder,
                 ref fileName,
-                out htmlBody,
-                out body,
-                out attachmentList,
-                out files);
+                out var htmlBody,
+                out var body,
+                out var attachmentList,
+                out var files);
 
             if (!htmlBody)
                 hyperlinks = false;
@@ -982,7 +978,7 @@ namespace MsgReader
 
             // Sent on
             WriteHeaderLine(emailHeader, htmlBody, maxLength, LanguageConsts.EmailSentOnLabel,
-                (message.Headers.DateSent.ToLocalTime()).ToString(LanguageConsts.DataFormatWithTime));
+                message.Headers.DateSent.ToLocalTime().ToString(LanguageConsts.DataFormatWithTime));
 
             // To
             WriteHeaderLineNoEncoding(emailHeader, htmlBody, maxLength, LanguageConsts.EmailToLabel,
@@ -1059,21 +1055,16 @@ namespace MsgReader
         private List<string> WriteMsgAppointment(Storage.Message message, string outputFolder, bool hyperlinks)
         {
             var fileName = "appointment";
-            bool htmlBody;
-            string body;
-            string dummy;
-            List<string> attachmentList;
-            List<string> files;
 
             PreProcessMsgFile(message,
                 hyperlinks,
                 outputFolder,
                 ref fileName,
-                out htmlBody,
-                out body,
-                out dummy,
-                out attachmentList,
-                out files);
+                out var htmlBody,
+                out var body,
+                out _,
+                out var attachmentList,
+                out var files);
 
             if (!htmlBody)
                 hyperlinks = false;
@@ -1164,10 +1155,10 @@ namespace MsgReader
             // Mandatory participants (TO)
             WriteHeaderLineNoEncoding(appointmentHeader, htmlBody, maxLength,
                 LanguageConsts.AppointmentMandatoryParticipantsLabel,
-                message.GetEmailRecipients(Storage.Recipient.RecipientType.To, htmlBody, hyperlinks));
+                message.GetEmailRecipients(RecipientType.To, htmlBody, hyperlinks));
 
             // Optional participants (CC)
-            var cc = message.GetEmailRecipients(Storage.Recipient.RecipientType.Cc, htmlBody, hyperlinks);
+            var cc = message.GetEmailRecipients(RecipientType.Cc, htmlBody, hyperlinks);
             if (!string.IsNullOrEmpty(cc))
                 WriteHeaderLineNoEncoding(appointmentHeader, htmlBody, maxLength,
                     LanguageConsts.AppointmentOptionalParticipantsLabel, cc);
@@ -1231,21 +1222,16 @@ namespace MsgReader
         private List<string> WriteMsgTask(Storage.Message message, string outputFolder, bool hyperlinks)
         {
             var fileName = "task";
-            bool htmlBody;
-            string body;
-            string dummy;
-            List<string> attachmentList;
-            List<string> files;
 
             PreProcessMsgFile(message,
                 hyperlinks,
                 outputFolder,
                 ref fileName,
-                out htmlBody,
-                out body,
-                out dummy,
-                out attachmentList,
-                out files);
+                out var htmlBody,
+                out var body,
+                out _,
+                out var attachmentList,
+                out var files);
             
             var maxLength = 0;
 
@@ -1405,21 +1391,16 @@ namespace MsgReader
         private List<string> WriteMsgContact(Storage.Message message, string outputFolder, bool hyperlinks)
         {
             var fileName = "contact";
-            bool htmlBody;
-            string body;
-            string contactPhotoFileName;
-            List<string> attachmentList;
-            List<string> files;
 
             PreProcessMsgFile(message,
                 hyperlinks,
                 outputFolder,
                 ref fileName,
-                out htmlBody,
-                out body,
-                out contactPhotoFileName,
-                out attachmentList,
-                out files);
+                out var htmlBody,
+                out var body,
+                out var contactPhotoFileName,
+                out _,
+                out var files);
 
             var maxLength = 0;
 
@@ -1845,7 +1826,7 @@ namespace MsgReader
         /// an HTML body</param>
         /// <param name="body">Returns the html or text body</param>
         /// <param name="contactPhotoFileName">Returns the filename of the contact photo. This field will only
-        /// return a value when the <see cref="Storage.Message"/> object is a <see cref="Storage.Message.MessageType.Contact"/> 
+        /// return a value when the <see cref="Storage.Message"/> object is a <see cref="MessageType.Contact"/> 
         /// type and the <see cref="Storage.Message.Attachments"/> contains an object that has the 
         /// <param ref="Storage.Message.Attachment.IsContactPhoto"/> set to true, otherwise this field will always be null</param>
         /// <param name="attachments">Returns a list of names with the found attachment</param>

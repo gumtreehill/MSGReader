@@ -1770,6 +1770,7 @@ namespace MsgReader.Outlook
                             tempEmail = testEmail;
                     }
                 }
+
                 // PR_NEXT_SEND_ACCT can contain the smtp address of an exchange account, in contains the same account in testing, unsure if it would be set without Primary
 
                 //if (string.IsNullOrEmpty(tempEmail) || tempEmail.IndexOf("@", StringComparison.Ordinal) < 0)
